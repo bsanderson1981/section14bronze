@@ -15,7 +15,7 @@ class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'USD';
   String baseAsset = '';
   String quoteAsset = '';
-  double? exchangeRate;
+   double?  exchangeRate;
 
   DropdownButton<String> androidDropdown() {
     List<DropdownMenuItem<String>> dropdownItems = [];
@@ -74,7 +74,7 @@ class _PriceScreenState extends State<PriceScreen> {
     };
 
     try {
-      print('Sending request to CoinAPI...');
+      //print('Sending request to CoinAPI...');
       print('Headers: $headers');
       final response = await http.get(url, headers: headers);
 
@@ -84,7 +84,9 @@ class _PriceScreenState extends State<PriceScreen> {
         setState(() {
           baseAsset = jsonData['asset_id_base'];
           quoteAsset = jsonData['asset_id_quote'];
+          //exchangeRate = double.parse(jsonData['rate']; //todAsFixed(2));
           exchangeRate = jsonData['rate']?.toDouble();
+          print('exchange: $exchangeRate');
         });
 
         print("Success: $baseAsset to $quoteAsset = $exchangeRate");
@@ -101,7 +103,8 @@ class _PriceScreenState extends State<PriceScreen> {
   Widget build(BuildContext context) {
     String displayText = exchangeRate == null
         ? '1 BTC = ? $selectedCurrency'
-        : '1 $baseAsset = $exchangeRate $quoteAsset';
+        :'1 $baseAsset = ${exchangeRate?.toStringAsFixed(2)} $quoteAsset';
+     //   : '1 $baseAsset = $exchangeRate $quoteAsset';
 
     return Scaffold(
       appBar: AppBar(

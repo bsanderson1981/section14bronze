@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:section14bronze/coin_data.dart';
 import 'dart:io' show Platform;
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -13,6 +13,9 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = 'USD';
+  String baseAsset = '';
+  String quoteAsset = '';
+  double? exchangeRate;
 
   DropdownButton<String> androidDropdown() {
     List<DropdownMenuItem<String>> dropdownItems = [];
@@ -29,7 +32,8 @@ class _PriceScreenState extends State<PriceScreen> {
       items: dropdownItems,
       onChanged: (value) {
         setState(() {
-         // selectedCurrency = value;
+          selectedCurrency = value!;
+          getData(); // Re-fetch data when currency changes
         });
       },
     );
@@ -45,24 +49,60 @@ class _PriceScreenState extends State<PriceScreen> {
       backgroundColor: Colors.lightBlue,
       itemExtent: 32.0,
       onSelectedItemChanged: (selectedIndex) {
-        print(selectedIndex);
+        setState(() {
+          selectedCurrency = currenciesList[selectedIndex];
+          getData(); // Re-fetch data when currency changes
+        });
       },
       children: pickerItems,
     );
   }
 
-  //TODO: Create a method here called getData() to get the coin data from coin_data.dart
-
   @override
   void initState() {
     super.initState();
-    
-        getData ();
-    //TODO: Call getData() when the screen loads up.
+    getData();
+  }
+
+  Future<void> getData() async {
+    final url = Uri.parse(
+        "https://api-realtime.exrates.coinapi.io/v1/exchangerate/BTC/$selectedCurrency");
+
+    final headers = {
+      'Accept': 'text/plain',
+      'X-CoinAPI-Key': dotenv.env['COIN_API_KEY'] ?? '',
+    };
+
+    try {
+      print('Sending request to CoinAPI...');
+      print('Headers: $headers');
+      final response = await http.get(url, headers: headers);
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+
+        setState(() {
+          baseAsset = jsonData['asset_id_base'];
+          quoteAsset = jsonData['asset_id_quote'];
+          exchangeRate = jsonData['rate']?.toDouble();
+        });
+
+        print("Success: $baseAsset to $quoteAsset = $exchangeRate");
+      } else {
+        print("Failed with status: ${response.statusCode}");
+        print("Body: ${response.body}");
+      }
+    } catch (e) {
+      print("Error: $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    String displayText = exchangeRate == null
+        ? '1 BTC = ? $selectedCurrency'
+        : '1 $baseAsset = $exchangeRate $quoteAsset';
+
     return Scaffold(
       appBar: AppBar(
         title: Text('🤑 Coin Ticker'),
@@ -82,8 +122,7 @@ class _PriceScreenState extends State<PriceScreen> {
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
                 child: Text(
-                  //TODO: Update the Text Widget with the live bitcoin data here.
-                  '1 BTC = ? USD',
+                  displayText,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 20.0,
@@ -104,32 +143,4 @@ class _PriceScreenState extends State<PriceScreen> {
       ),
     );
   }
-
-
-    Future<void> getData() async {
-
-      final url = Uri.parse("https://api-realtime.exrates.coinapi.io/v1/exchangerate/BTC/USD");
-
-      final headers = {
-        'Accept': 'text/plain',
-        'X-CoinAPI-Key': dotenv.env['COIN_API_KEY'] ?? '', // Replace with your actual key
-      };
-
-      try {
-        print(' top of try block');
-        final response = await http.get(url, headers: headers);
-
-
-        print('headers: $headers');
-        if (response.statusCode == 200) {
-          print("Response: ${response.body}");
-        } else {
-          print("Failed with status: ${response.statusCode}");
-          print("Body: ${response.body}");
-        }
-      } catch (e) {
-        print("Error: $e");
-      }
-    }
-  }
-
+}

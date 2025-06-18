@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'coin_data.dart';
+import 'package:section14bronze/coin_data.dart';
 import 'dart:io' show Platform;
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -53,6 +56,8 @@ class _PriceScreenState extends State<PriceScreen> {
   @override
   void initState() {
     super.initState();
+    
+        getData ();
     //TODO: Call getData() when the screen loads up.
   }
 
@@ -99,4 +104,32 @@ class _PriceScreenState extends State<PriceScreen> {
       ),
     );
   }
-}
+
+
+    Future<void> getData() async {
+
+      final url = Uri.parse("https://api-realtime.exrates.coinapi.io/v1/exchangerate/BTC/USD");
+
+      final headers = {
+        'Accept': 'text/plain',
+        'X-CoinAPI-Key': dotenv.env['COIN_API_KEY'] ?? '', // Replace with your actual key
+      };
+
+      try {
+        print(' top of try block');
+        final response = await http.get(url, headers: headers);
+
+
+        print('headers: $headers');
+        if (response.statusCode == 200) {
+          print("Response: ${response.body}");
+        } else {
+          print("Failed with status: ${response.statusCode}");
+          print("Body: ${response.body}");
+        }
+      } catch (e) {
+        print("Error: $e");
+      }
+    }
+  }
+

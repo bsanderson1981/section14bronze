@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'price_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'coin_data.dart';
-
+//import 'coin_data.dart';
+//silver and bronze done in thise code
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
  // print("Loaded API Key: ${dotenv.env['COIN_API_KEY']}");
